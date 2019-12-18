@@ -453,6 +453,14 @@ public class GridDhtLocalPartition extends GridCacheConcurrentMapImpl implements
 
             long newState = setReservations(state, getReservations(state) + 1);
 
+            int res = getReservations(newState);
+
+            if (res > 500)
+                log.warning("HUGE RESERVATIONS COUNT " + res);
+
+            if (res == 0)
+                log.error("RESERVATIONS OVERFLOW");
+
             if (this.state.compareAndSet(state, newState))
                 return true;
         }
