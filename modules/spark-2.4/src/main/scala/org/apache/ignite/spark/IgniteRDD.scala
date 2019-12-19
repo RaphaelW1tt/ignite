@@ -58,7 +58,7 @@ class IgniteRDD[K, V] (
     override def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
         val cache = ensureCache()
 
-        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index)
+        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index).setPageSize(1)
 
         val cur = cache.query(qry)
 
