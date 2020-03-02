@@ -46,8 +46,12 @@ class IgniteRDD[K, V] (
     val ic: IgniteContext,
     val cacheName: String,
     val cacheCfg: CacheConfiguration[K, V],
-    val keepBinary: Boolean
+    val keepBinary: Boolean,
+    val pageS: Int
 ) extends IgniteAbstractRDD[(K, V), K, V] (ic, cacheName, cacheCfg, keepBinary) {
+
+    var pageSize = pageS
+
     /**
      * Computes iterator based on given partition.
      *
@@ -58,7 +62,7 @@ class IgniteRDD[K, V] (
     override def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
         val cache = ensureCache()
 
-        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index).setPageSize(1)
+        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index).setPageSize(pageSize)
 
         val cur = cache.query(qry)
 
@@ -108,6 +112,10 @@ class IgniteRDD[K, V] (
      */
     override def isEmpty(): Boolean = {
         count() == 0
+    }
+
+    def setPageSize(pS: Int): Unit = {
+        pageSize = pS
     }
 
     /**
@@ -314,7 +322,8 @@ class IgniteRDD[K, V] (
             ic,
             cacheName,
             cacheCfg.asInstanceOf[CacheConfiguration[K1, V1]],
-            true)
+            true,
+            pageSize)
     }
 
     /**
