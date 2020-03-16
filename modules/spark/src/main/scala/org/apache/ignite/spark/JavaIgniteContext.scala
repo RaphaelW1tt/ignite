@@ -59,11 +59,11 @@ class JavaIgniteContext[K, V](
         }, standalone)
     }
 
-    def fromCache(cacheName: String): JavaIgniteRDD[K, V] =
-        JavaIgniteRDD.fromIgniteRDD(new IgniteRDD[K, V](ic, cacheName, null, false))
+    def fromCache(cacheName: String, pageSize: Int): JavaIgniteRDD[K, V] =
+        JavaIgniteRDD.fromIgniteRDD(new IgniteRDD[K, V](ic, cacheName, null, false, pageSize))
 
-    def fromCache(cacheCfg: CacheConfiguration[K, V]) =
-        JavaIgniteRDD.fromIgniteRDD(new IgniteRDD[K, V](ic, cacheCfg.getName, cacheCfg, false))
+    def fromCache(cacheCfg: CacheConfiguration[K, V],  pageSize: Int) =
+        JavaIgniteRDD.fromIgniteRDD(new IgniteRDD[K, V](ic, cacheCfg.getName, cacheCfg, false, pageSize))
 
     def ignite(): Ignite = ic.ignite()
 
