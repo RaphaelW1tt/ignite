@@ -47,8 +47,8 @@ class IgniteRDD[K, V] (
     val ic: IgniteContext,
     val cacheName: String,
     val cacheCfg: CacheConfiguration[K, V],
-    val keepBinary: Boolean
-) extends IgniteAbstractRDD[(K, V), K, V] (ic, cacheName, cacheCfg, keepBinary) {
+    val keepBinary: Boolean,
+    val pageS: Int) extends IgniteAbstractRDD[(K, V), K, V] (ic, cacheName, cacheCfg, keepBinary) {
     /**
      * Computes iterator based on given partition.
      *
@@ -56,10 +56,22 @@ class IgniteRDD[K, V] (
      * @param context Task context.
      * @return Partition iterator.
      */
+
+    var pageSize = pageS
+
+    /**
+     * Sets given pageSize.
+     *
+     * @return
+     */
+    def setPageSize(pS: Int): Unit = {
+        pageSize = pS
+    }
+
     override def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
         val cache = ensureCache()
 
-        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index)
+        val qry: ScanQuery[K, V] = new ScanQuery[K, V](part.index).setPageSize(pageSize)
 
         val cur = cache.query(qry)
 
@@ -110,6 +122,7 @@ class IgniteRDD[K, V] (
     override def isEmpty(): Boolean = {
         count() == 0
     }
+
 
     /**
      * Gets number of tuples in this IgniteRDD.
@@ -311,7 +324,8 @@ class IgniteRDD[K, V] (
             ic,
             cacheName,
             cacheCfg.asInstanceOf[CacheConfiguration[K1, V1]],
-            true)
+            true,
+            pageSize)
     }
 
     /**
