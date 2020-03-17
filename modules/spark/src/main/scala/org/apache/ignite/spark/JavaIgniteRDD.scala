@@ -102,11 +102,86 @@ class JavaIgniteRDD[K, V](override val rdd: IgniteRDD[K, V])
     def withKeepBinary[K1, V1](): JavaIgniteRDD[K1, V1] = new JavaIgniteRDD[K1, V1](rdd.withKeepBinary[K1, V1]())
 }
 
+class JavaIgniteRDDPageSize[K, V](override val rdd: IgniteRDDPageSize[K, V])
+  extends JavaPairRDD[K, V](rdd)(JavaIgniteRDDPageSize.fakeClassTag, JavaIgniteRDDPageSize.fakeClassTag) {
+
+    override def wrapRDD(rdd: RDD[(K, V)]): JavaPairRDD[K, V] = JavaPairRDD.fromRDD(rdd)
+
+    override val classTag: ClassTag[(K, V)] = JavaIgniteRDDPageSize.fakeClassTag
+
+    /**
+     * Computes iterator based on given partition.
+     *
+     * @param part Partition to use.
+     * @param context Task context.
+     * @return Partition iterator.
+     */
+    def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
+        rdd.compute(part, context)
+    }
+
+    /**
+     * Gets partitions for the given cache RDD.
+     *
+     * @return Partitions.
+     */
+    protected def getPartitions: java.util.List[Partition] = {
+        new util.ArrayList[Partition](rdd.getPartitions.toSeq)
+    }
+
+    /**
+     * Gets preferred locations for the given partition.
+     *
+     * @param split Split partition.
+     * @return
+     */
+    protected def getPreferredLocations(split: Partition): Seq[String] = {
+        rdd.getPreferredLocations(split)
+    }
+
+    @varargs def objectSql(typeName: String, sql: String, args: Any*): JavaPairRDD[K, V] =
+        JavaPairRDD.fromRDD(rdd.objectSql(typeName, sql, args:_*))
+
+    @varargs def sql(sql: String, args: Any*): DataFrame = rdd.sql(sql, args:_*)
+
+    def saveValues(jrdd: JavaRDD[V]) = rdd.saveValues(JavaRDD.toRDD(jrdd))
+
+    def saveValues[T](jrdd: JavaRDD[T], f: (T, IgniteContext) ⇒ V) = rdd.saveValues(JavaRDD.toRDD(jrdd), f)
+
+    def savePairs(jrdd: JavaPairRDD[K, V], overwrite: Boolean) = {
+        val rrdd: RDD[(K, V)] = JavaPairRDD.toRDD(jrdd)
+
+        rdd.savePairs(rrdd, overwrite)
+    }
+
+    def savePairs(jrdd: JavaPairRDD[K, V]) : Unit = savePairs(jrdd, overwrite = false)
+
+    def savePairs[T](jrdd: JavaRDD[T], f: (T, IgniteContext) ⇒ (K, V), overwrite: Boolean = false) = {
+        rdd.savePairs(JavaRDD.toRDD(jrdd), f, overwrite)
+    }
+
+    def savePairs[T](jrdd: JavaRDD[T], f: (T, IgniteContext) ⇒ (K, V)): Unit =
+        savePairs(jrdd, f, overwrite = false)
+
+    def clear(): Unit = rdd.clear()
+
+    def withKeepBinary[K1, V1](): JavaIgniteRDDPageSize[K1, V1] = new JavaIgniteRDDPageSize[K1, V1](rdd.withKeepBinary[K1, V1]())
+}
+
 object JavaIgniteRDD {
     implicit def fromIgniteRDD[K: ClassTag, V: ClassTag](rdd: IgniteRDD[K, V]): JavaIgniteRDD[K, V] =
         new JavaIgniteRDD[K, V](rdd)
 
     implicit def toIgniteRDD[K, V](rdd: JavaIgniteRDD[K, V]): IgniteRDD[K, V] = rdd.rdd
+
+    def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
+}
+
+object JavaIgniteRDDPageSize {
+    implicit def fromIgniteRDDPageSize[K: ClassTag, V: ClassTag](rdd: IgniteRDDPageSize[K, V]): JavaIgniteRDDPageSize[K, V] =
+        new JavaIgniteRDDPageSize[K, V](rdd)
+
+    implicit def toIgniteRDD[K, V](rdd: JavaIgniteRDDPageSize[K, V]): IgniteRDDPageSize[K, V] = rdd.rdd
 
     def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
 }

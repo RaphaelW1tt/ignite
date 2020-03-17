@@ -119,8 +119,12 @@ class IgniteContext(
      * @param cacheName Cache name.
      * @return `IgniteRDD` instance.
      */
-    def fromCache[K, V](cacheName: String, pageSize: Int): IgniteRDD[K, V] = {
-        new IgniteRDD[K, V](this, cacheName, null, false, pageSize)
+    def fromCache[K, V](cacheName: String, pageSize: Int): IgniteRDDPageSize[K, V] = {
+        new IgniteRDDPageSize[K, V](this, cacheName, null, false, pageSize)
+    }
+
+    def fromCache[K, V](cacheName: String): IgniteRDD[K, V] = {
+        new IgniteRDD[K, V](this, cacheName, null, false)
     }
 
     /**
@@ -130,8 +134,12 @@ class IgniteContext(
      * @param cacheCfg Cache configuration to use.
      * @return `IgniteRDD` instance.
      */
-    def fromCache[K, V](cacheCfg: CacheConfiguration[K, V], pageSize: Int) = {
-        new IgniteRDD[K, V](this, cacheCfg.getName, cacheCfg, false, pageSize)
+    def fromCache[K, V](cacheCfg: CacheConfiguration[K, V], pageSize: Int): IgniteRDDPageSize[K, V]  = {
+        new IgniteRDDPageSize[K, V](this, cacheCfg.getName, cacheCfg, false, pageSize)
+    }
+
+    def fromCache[K, V](cacheCfg: CacheConfiguration[K, V]) = {
+        new IgniteRDD[K, V](this, cacheCfg.getName, cacheCfg, false)
     }
 
     /**
